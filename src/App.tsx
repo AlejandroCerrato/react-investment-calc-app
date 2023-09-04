@@ -1,35 +1,67 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import Header from "./components/Header/Header";
+import UserInput from "./components/UserInput/UserInput";
+import ResultsTable from "./components/ResultsTable/ResultsTable";
+import { useState } from "react";
+
+export type userInputType = {
+    "current-savings": number;
+    "monthly-contribution": number;
+    "expected-return": number;
+    duration: number;
+};
+
+export type resultType = {
+    year: number;
+    yearlyInterest: number;
+    savingsEndOfYear: number;
+    yearlyContribution: number;
+};
 
 function App() {
-  const [count, setCount] = useState(0)
+    const [userInput, setUserInput] = useState<userInputType | null>(null);
 
-  return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    const calculateHandler = (userInput: userInputType) => {
+        setUserInput(userInput);
+    };
+
+    const yearlyData = []; // per-year results
+
+    if (userInput) {
+        let currentSavings = +userInput["current-savings"];
+        const yearlyContribution = +userInput["monthly-contribution"] * 12;
+        const expectedReturn = +userInput["expected-return"] / 100;
+        const duration = +userInput["duration"];
+
+        // The below code calculates yearly results (total savings, interest etc)
+        for (let i = 0; i < duration; i++) {
+            const yearlyInterest = currentSavings * expectedReturn;
+            currentSavings += yearlyInterest + yearlyContribution;
+            yearlyData.push({
+                year: i + 1,
+                yearlyInterest: yearlyInterest,
+                savingsEndOfYear: currentSavings,
+                yearlyContribution: yearlyContribution,
+            });
+        }
+    }
+
+    return (
+        <div>
+            <Header />
+            <UserInput onCalculate={calculateHandler} />
+            {!userInput && (
+                <p style={{ textAlign: "center" }}>
+                    No se ha calculado nada aún.
+                </p>
+            )}
+            {userInput && (
+                <ResultsTable
+                    data={yearlyData}
+                    initialInvestment={userInput["current-savings"]}
+                />
+            )}
+        </div>
+    );
 }
 
-export default App
+export default App;
